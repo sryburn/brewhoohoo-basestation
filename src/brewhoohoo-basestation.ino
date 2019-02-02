@@ -21,13 +21,27 @@
   int meshStatus = 1; //0=disconnected, 1=connected
   int batteryVoltage = 0;
 
+int led = D7;
+int pump1 = WKP;
+int pump2 = D0;
+int boilElement = A2;
+int hltElement = A1;
+
 void setup() {
   Mesh.subscribe("set", setValue);
-  pinMode(D7, OUTPUT);
+  setPinModes();
 }
 
 void loop() {
 
+}
+
+void setPinModes(){
+    pinMode(pump1, OUTPUT);
+    pinMode(pump2, OUTPUT);
+    pinMode(boilElement, OUTPUT);
+    pinMode(hltElement, OUTPUT);
+    pinMode(led, OUTPUT);
 }
 
 void setValue(const char *event, const char *data){
