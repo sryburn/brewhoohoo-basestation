@@ -1,4 +1,7 @@
 #include "JsonParserGeneratorRK.h"
+#include "CountdownTimer.h"
+
+CountdownTimer countdownTimer;
 
   int boilPower = 0;
   double boilSetpoint = 0;
@@ -15,8 +18,8 @@
   bool hltElementOn = false;
   int boilMode = 0; // 0=power, 1=setpoint
   int hltMode = 1; // 0=power, 1=hlt setpoint, 2=mash setpoint
-  char countdownTime[5];
-  int timerState = 0; // 0=paused, 1=started
+  char countdownTime[20];
+  bool timerStarted; 
   int cloudStatus = 1; //0=disconnected, 1=connected
   int meshStatus = 1; //0=disconnected, 1=connected
   int batteryVoltage = 0;
@@ -30,10 +33,14 @@ int hltElement = A1;
 void setup() {
   Mesh.subscribe("set", setValue);
   setPinModes();
+  countdownTimer.reset();
 }
 
 void loop() {
-
+  if (countdownTimer.hasUpdated()==true){
+    strcpy(countdownTime, countdownTimer.getClockText());
+    publishJson();
+  }
 }
 
 void setPinModes(){
@@ -69,6 +76,17 @@ void setValue(const char *event, const char *data){
   if (strcmp(event, "setPump2Power") == 0){
     pump2Power = atoi(data);
   }
+  if (strcmp(event, "setTimerStart") == 0){
+    countdownTimer.start();
+    timerStarted = true;
+  }
+  if (strcmp(event, "setTimerStop") == 0){
+    countdownTimer.stop();
+    timerStarted = false;
+  }
+  if (strcmp(event, "setTimerReset") == 0){
+    countdownTimer.reset();
+  }
 
   publishJson();
 }
@@ -77,6 +95,7 @@ void publishJson(){
   JsonWriterStatic<622> jsonBuffer;
   {
   JsonWriterAutoObject obj(&jsonBuffer);
+  jsonBuffer.insertKeyValue("countdownTime", countdownTime);
   jsonBuffer.insertKeyValue("boilPower", boilPower);
   jsonBuffer.insertKeyValue("boilSetpoint", boilSetpoint);
   jsonBuffer.insertKeyValue("mashSetpoint", mashSetpoint);
@@ -92,8 +111,7 @@ void publishJson(){
   jsonBuffer.insertKeyValue("hltElementOn", hltElementOn);
   jsonBuffer.insertKeyValue("boilMode", boilMode);
   jsonBuffer.insertKeyValue("hltMode", hltMode);
-  jsonBuffer.insertKeyValue("countdownTime", countdownTime);
-  jsonBuffer.insertKeyValue("timerState", timerState);
+  jsonBuffer.insertKeyValue("timerStarted", timerStarted);
   jsonBuffer.insertKeyValue("cloudStatus", cloudStatus);
   jsonBuffer.insertKeyValue("meshStatus", meshStatus);
   jsonBuffer.insertKeyValue("batteryVoltage", batteryVoltage);
