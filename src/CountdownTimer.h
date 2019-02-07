@@ -12,7 +12,7 @@ class CountdownTimer
     static const char* getClockText(); 
   private:
     //these are static as the countdown method is called from a separate timer instance
-    static char clockText[20];
+    static char clockText[6];
     static int decaminutes;
     static int minutes;
     static int decaseconds;

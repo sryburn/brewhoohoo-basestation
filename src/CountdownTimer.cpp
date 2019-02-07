@@ -5,7 +5,7 @@ CountdownTimer callback;
 Timer countdownClock(1000, &CountdownTimer::countdown, callback);
 
 bool CountdownTimer::updated = false;
-char CountdownTimer::clockText[20] = "";
+char CountdownTimer::clockText[6] = "";
 int CountdownTimer::decaminutes = 6;
 int CountdownTimer::minutes = 0;
 int CountdownTimer::decaseconds = 0;

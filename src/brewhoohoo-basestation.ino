@@ -1,34 +1,9 @@
 #include "JsonParserGeneratorRK.h"
 #include "CountdownTimer.h"
+#include "State.h"
 
 CountdownTimer countdownTimer;
-
-  int boilPower = 0;
-  double boilSetpoint = 0;
-  double mashSetpoint = 0;
-  int hltPower = 0;
-  double hltSetpoint = 0;
-  int pump1Power = 0;
-  int pump2Power = 0;
-  double mashTemp = 0;
-  double boilTemp = 0;
-  double coilTemp = 0;
-  double hltTemp = 0;
-  bool boilElementOn = false;
-  bool hltElementOn = false;
-  int boilMode = 0; // 0=power, 1=setpoint
-  int hltMode = 1; // 0=power, 1=hlt setpoint, 2=mash setpoint
-  char countdownTime[20];
-  bool timerStarted; 
-  int cloudStatus = 1; //0=disconnected, 1=connected
-  int meshStatus = 1; //0=disconnected, 1=connected
-  int batteryVoltage = 0;
-
-int led = D7;
-int pump1 = WKP;
-int pump2 = D0;
-int boilElement = A2;
-int hltElement = A1;
+SystemState state;
 
 void setup() {
   Mesh.subscribe("set", setValue);
@@ -37,52 +12,60 @@ void setup() {
 }
 
 void loop() {
+  //TODO: read temperature probes
+
   if (countdownTimer.hasUpdated()==true){
-    strcpy(countdownTime, countdownTimer.getClockText());
+    strcpy(state.countdownTime, countdownTimer.getClockText());
+    // state.countdownTime = countdownTimer.getClockText();
     publishJson();
   }
 }
 
 void setPinModes(){
-    pinMode(pump1, OUTPUT);
-    pinMode(pump2, OUTPUT);
-    pinMode(boilElement, OUTPUT);
-    pinMode(hltElement, OUTPUT);
-    pinMode(led, OUTPUT);
+  int led = D7;
+  int pump1 = WKP;
+  int pump2 = D0;
+  int boilElement = A2;
+  int hltElement = A1;
+  pinMode(pump1, OUTPUT);
+  pinMode(pump2, OUTPUT);
+  pinMode(boilElement, OUTPUT);
+  pinMode(hltElement, OUTPUT);
+  pinMode(led, OUTPUT);
 }
 
 void setValue(const char *event, const char *data){
   if (strcmp(event, "setBoilPower") == 0){
-    boilPower = atoi(data);
+    state.boilPower = atoi(data);
   }
   if (strcmp(event, "setBoilSetpoint") == 0){
-    boilSetpoint = atoi(data);
+    state.boilSetpoint = atoi(data);
   }
   if (strcmp(event, "setMashSetpoint") == 0){
-    mashSetpoint = atof(data);
-    hltSetpoint = -1;
+    state.mashSetpoint = atof(data);
+    state.hltSetpoint = -1;
   }
   if (strcmp(event, "setHltPower") == 0){
-    hltPower = atoi(data);
-    mashSetpoint = -1;
+    state.hltPower = atoi(data);
+    state.mashSetpoint = -1;
   }
   if (strcmp(event, "setHltSetpoint") == 0){
-    hltSetpoint = atof(data);
-    mashSetpoint = -1;
+    state.hltSetpoint = atof(data);
+    state.mashSetpoint = -1;
   }
   if (strcmp(event, "setPump1Power") == 0){
-    pump1Power = atoi(data);
+    state.pump1Power = atoi(data);
   }
   if (strcmp(event, "setPump2Power") == 0){
-    pump2Power = atoi(data);
+    state.pump2Power = atoi(data);
   }
   if (strcmp(event, "setTimerStart") == 0){
     countdownTimer.start();
-    timerStarted = true;
+    state.timerStarted = true;
   }
   if (strcmp(event, "setTimerStop") == 0){
     countdownTimer.stop();
-    timerStarted = false;
+    state.timerStarted = false;
   }
   if (strcmp(event, "setTimerReset") == 0){
     countdownTimer.reset();
@@ -95,26 +78,26 @@ void publishJson(){
   JsonWriterStatic<622> jsonBuffer;
   {
   JsonWriterAutoObject obj(&jsonBuffer);
-  jsonBuffer.insertKeyValue("countdownTime", countdownTime);
-  jsonBuffer.insertKeyValue("boilPower", boilPower);
-  jsonBuffer.insertKeyValue("boilSetpoint", boilSetpoint);
-  jsonBuffer.insertKeyValue("mashSetpoint", mashSetpoint);
-  jsonBuffer.insertKeyValue("hltPower", hltPower);
-  jsonBuffer.insertKeyValue("hltSetpoint", hltSetpoint);
-  jsonBuffer.insertKeyValue("pump1Power", pump1Power);
-  jsonBuffer.insertKeyValue("pump2Power", pump2Power);
-  jsonBuffer.insertKeyValue("mashTemp", mashTemp);
-  jsonBuffer.insertKeyValue("boilTemp", boilTemp);
-  jsonBuffer.insertKeyValue("coilTemp", coilTemp);
-  jsonBuffer.insertKeyValue("hltTemp", hltTemp);
-  jsonBuffer.insertKeyValue("boilElementOn", boilElementOn);
-  jsonBuffer.insertKeyValue("hltElementOn", hltElementOn);
-  jsonBuffer.insertKeyValue("boilMode", boilMode);
-  jsonBuffer.insertKeyValue("hltMode", hltMode);
-  jsonBuffer.insertKeyValue("timerStarted", timerStarted);
-  jsonBuffer.insertKeyValue("cloudStatus", cloudStatus);
-  jsonBuffer.insertKeyValue("meshStatus", meshStatus);
-  jsonBuffer.insertKeyValue("batteryVoltage", batteryVoltage);
+  jsonBuffer.insertKeyValue("countdownTime", state.countdownTime);
+  jsonBuffer.insertKeyValue("boilPower", state.boilPower);
+  jsonBuffer.insertKeyValue("boilSetpoint", state.boilSetpoint);
+  jsonBuffer.insertKeyValue("mashSetpoint", state.mashSetpoint);
+  jsonBuffer.insertKeyValue("hltPower", state.hltPower);
+  jsonBuffer.insertKeyValue("hltSetpoint", state.hltSetpoint);
+  jsonBuffer.insertKeyValue("pump1Power", state.pump1Power);
+  jsonBuffer.insertKeyValue("pump2Power", state.pump2Power);
+  jsonBuffer.insertKeyValue("mashTemp", state.mashTemp);
+  jsonBuffer.insertKeyValue("boilTemp", state.boilTemp);
+  jsonBuffer.insertKeyValue("coilTemp", state.coilTemp);
+  jsonBuffer.insertKeyValue("hltTemp", state.hltTemp);
+  jsonBuffer.insertKeyValue("boilElementOn", state.boilElementOn);
+  jsonBuffer.insertKeyValue("hltElementOn", state.hltElementOn);
+  jsonBuffer.insertKeyValue("timerStarted", state.timerStarted);
+  jsonBuffer.insertKeyValue("boilMode", state.boilMode);
+  jsonBuffer.insertKeyValue("hltMode", state.hltMode);
+  jsonBuffer.insertKeyValue("cloudStatus", state.cloudStatus);
+  jsonBuffer.insertKeyValue("meshStatus", state.meshStatus);
+  jsonBuffer.insertKeyValue("batteryVoltage", state.batteryVoltage);
   }
 
   Mesh.publish("status", jsonBuffer.getBuffer());
